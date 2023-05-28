@@ -30,14 +30,15 @@ public class IgnCl2023 {
             long iteration_period = 0;
             for (int iteration = 0; iteration < iteration_num; iteration++) {
                 // add 10000 keys in cache and get time for this operation
-                itm.Start();
+                //System.out.println("Iteration " + iteration);
+                itm.start();
                 for (int i = 0; i < 10000; i++) {
                     cache.put(i, "Value_" + i);
                 }
-                System.out.println("Iteration " + iteration);
-                iteration_period += itm.Stop();
+                //iteration_period += itm.stopWithMessage();
+                iteration_period += itm.stop();
             }
-            System.out.println("Average time for " + iteration_num + "iterations is: " + (iteration_period/iteration_num));
+            System.out.println("Average time for " + iteration_num + " iterations is: " + (iteration_period/iteration_num) + " ms.");
         }
     }
 }
