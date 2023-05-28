@@ -19,22 +19,24 @@ enum UseGetOperation {
 }
 
 public class KeyValueCacheTest {
+    // clear cache before each iteration
+    final static boolean CLEAR_CACHE_EACH_ITERATION = false;
 
     // number of iterations of tests by cache
-    final static int ITERATION_NUM = 10;
+    final static int ITERATION_NUM = 5;
 
     // number keys for put in cache by one iteration
     final static int NUM_KEYS = 10_000;
     // print statistic for each iteration of test
     final static boolean NEED_STAT_FOR_EACH_ITERATION = true;
     // number of random keys to get from cache
-    final static int NUM_GET_RND_KEYS = 5;
+    final static int NUM_GET_RND_KEYS = 10_000;
     // random gets from cache on each iteration
     final static boolean RANDOM_GETS_ON_EACH_ITERATION = true;
     // Print key value for get operation into console
     // Useful if we need to check elapsed time of gets operation for big number of keys.
     // In this case spent time to console out is not affected to overall time.
-    final static boolean PRINT_GET_KV_INTO_CONSOLE = true;
+    final static boolean PRINT_GET_KV_INTO_CONSOLE = false;
     // Thread sleep between iterations in ms.
     final static long SLEEP = 0L;
     // Cache name for test
@@ -86,6 +88,8 @@ public class KeyValueCacheTest {
                 map.clear();
             }
 
+            if (CLEAR_CACHE_EACH_ITERATION) cache.clear();
+
             itm.start(); //start timer
 
             // Put keys into cache be selected method
@@ -123,7 +127,7 @@ public class KeyValueCacheTest {
             }
         }
 
-        System.out.println("Average time for " + ITERATION_NUM + " iterations is: " + (iteration_period / ITERATION_NUM) + " ms.");
+        System.out.println("Average time for " + ITERATION_NUM + " put iterations is: " + (iteration_period / ITERATION_NUM) + " ms.");
     }
 
 
