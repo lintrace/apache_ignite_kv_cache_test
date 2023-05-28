@@ -9,19 +9,28 @@ import org.apache.ignite.configuration.ClientConfiguration;
 
 public class IgnCl2023 {
 
-        public static void main(String[] args) {
-            System.out.println("Test");
+    public static void main(String[] args) {
 
-            ClientConfiguration cfg = new ClientConfiguration().setAddresses("192.168.111.3");
+        IntervalTimer itm = new IntervalTimer();
+        System.out.println("Test");
 
-            try (IgniteClient client = Ignition.startClient(cfg)) {
-                ClientCache <Integer, String> cache = client.getOrCreateCache("Cache_1");
-                if (cache.size(CachePeekMode.PRIMARY) == 0) {
-                    System.out.println("Cache is empty!");
-                    cache.put(1,"First string");
-                } else {
-                    System.out.println("Cache contain data");
-                }
+        ClientConfiguration cfg = new ClientConfiguration().setAddresses("192.168.111.3:10800");
+        cfg.setPartitionAwarenessEnabled(true);
+
+        try (IgniteClient client = Ignition.startClient(cfg)) {
+            ClientCache<Integer, String> cache = client.getOrCreateCache("Cache_1");
+            if (cache.size(CachePeekMode.PRIMARY) == 0) {
+                System.out.println("The cache \"Cache_1\" is empty!");
+            } else {
+                System.out.println("The cache \"Cache_1\" alredy contain data. All data will be dropped and reinserted");
+                cache.clear();
             }
+            // add 10000 keys in cache and get time for this operation
+            itm.Start();
+            for (int i = 0; i < 10000; i++) {
+                cache.put(i, "Value_" + i);
+            }
+            itm.Stop();
         }
+    }
 }
