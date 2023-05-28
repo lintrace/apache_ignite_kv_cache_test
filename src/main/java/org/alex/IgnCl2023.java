@@ -12,7 +12,6 @@ public class IgnCl2023 {
     public static void main(String[] args) {
 
         IntervalTimer itm = new IntervalTimer();
-        System.out.println("Test");
 
         ClientConfiguration cfg = new ClientConfiguration().setAddresses("192.168.111.3:10800");
         cfg.setPartitionAwarenessEnabled(true);
