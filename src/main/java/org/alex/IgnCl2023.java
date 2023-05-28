@@ -25,12 +25,19 @@ public class IgnCl2023 {
                 System.out.println("The cache \"Cache_1\" already contain data. All data will be dropped and reinserted");
                 cache.clear();
             }
-            // add 10000 keys in cache and get time for this operation
-            itm.Start();
-            for (int i = 0; i < 10000; i++) {
-                cache.put(i, "Value_" + i);
+
+            int iteration_num = 10;
+            long iteration_period = 0;
+            for (int iteration = 0; iteration < iteration_num; iteration++) {
+                // add 10000 keys in cache and get time for this operation
+                itm.Start();
+                for (int i = 0; i < 10000; i++) {
+                    cache.put(i, "Value_" + i);
+                }
+                System.out.println("Iteration " + iteration);
+                iteration_period += itm.Stop();
             }
-            itm.Stop();
+            System.out.println("Average time for " + iteration_num + "iterations is: " + (iteration_period/iteration_num));
         }
     }
 }

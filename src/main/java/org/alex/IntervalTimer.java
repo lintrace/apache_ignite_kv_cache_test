@@ -8,7 +8,7 @@ public class IntervalTimer {
     }
     public long Stop() {
         long period = System.currentTimeMillis() - beginDateTime;
-        System.out.println("Period: " + period);
+        System.out.println("Period: " + period + " ms.");
         return period;
     }
 }
