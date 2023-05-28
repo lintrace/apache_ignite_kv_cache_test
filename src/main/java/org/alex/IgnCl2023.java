@@ -22,7 +22,7 @@ public class IgnCl2023 {
             if (cache.size(CachePeekMode.PRIMARY) == 0) {
                 System.out.println("The cache \"Cache_1\" is empty!");
             } else {
-                System.out.println("The cache \"Cache_1\" alredy contain data. All data will be dropped and reinserted");
+                System.out.println("The cache \"Cache_1\" already contain data. All data will be dropped and reinserted");
                 cache.clear();
             }
             // add 10000 keys in cache and get time for this operation
