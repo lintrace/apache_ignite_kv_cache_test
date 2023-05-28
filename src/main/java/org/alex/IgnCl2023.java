@@ -9,18 +9,18 @@ import org.apache.ignite.Ignition;
 import org.apache.ignite.client.IgniteClient;
 import org.apache.ignite.configuration.ClientConfiguration;
 
-import static org.alex.KeyValueCacheTest.StartKVCacheTest;
+import static org.alex.KeyValueCacheTest.startKVCacheTest;
 
 public class IgnCl2023 {
-    final public static String serverNodeAddress = "192.168.111.3:10800";
+    final public static String SERVER_NODE_ADDRESS = "192.168.111.3:10800";
 
     public static void main(String[] args) {
 
-        ClientConfiguration cfg = new ClientConfiguration().setAddresses(serverNodeAddress);
+        ClientConfiguration cfg = new ClientConfiguration().setAddresses(SERVER_NODE_ADDRESS);
         cfg.setPartitionAwarenessEnabled(true);
 
         try (IgniteClient client = Ignition.startClient(cfg)) {
-            StartKVCacheTest(client);
+            startKVCacheTest(client);
         }
     }
 }
