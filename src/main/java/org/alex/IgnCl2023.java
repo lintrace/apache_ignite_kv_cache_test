@@ -6,6 +6,8 @@ import org.apache.ignite.client.ClientCache;
 import org.apache.ignite.client.IgniteClient;
 import org.apache.ignite.configuration.ClientConfiguration;
 
+import java.util.Random;
+
 
 public class IgnCl2023 {
 
@@ -25,19 +27,29 @@ public class IgnCl2023 {
                 cache.clear();
             }
 
-            int iteration_num = 10;
+            final int iteration_num = 1; //10;
+            final int num_keys = 10_000;
             long iteration_period = 0;
             for (int iteration = 0; iteration < iteration_num; iteration++) {
                 // add 10000 keys in cache and get time for this operation
                 //System.out.println("Iteration " + iteration);
                 itm.start();
-                for (int i = 0; i < 10000; i++) {
-                    cache.put(i, "Value_" + i);
+                for (int i = 0; i < num_keys; i++) {
+                    //cache.put(i, "Value_" + i); // This method is very slowly! About 5 - 6 sec!
+                    cache.putAsync(i, "Value_" + i);
                 }
                 //iteration_period += itm.stopWithMessage();
                 iteration_period += itm.stop();
             }
-            System.out.println("Average time for " + iteration_num + " iterations is: " + (iteration_period/iteration_num) + " ms.");
+            System.out.println("Average time for " + iteration_num + " iterations is: " + (iteration_period / iteration_num) + " ms.");
+
+            System.out.println("Get 5 values by random keys");
+            Random rnd = new Random(System.currentTimeMillis());
+            int rnd_num = 0;
+            for (int i = 0; i < 5; i++) {
+                rnd_num = rnd.nextInt(num_keys);
+                System.out.println("Key: " + rnd_num + "    Value: " + cache.get(rnd_num));
+            }
         }
     }
 }
