@@ -8,7 +8,17 @@ import java.util.Random;
 import java.util.concurrent.ExecutionException;
 
 public class KeyValueCacheTest {
-    public static void KVCacheTest(IgniteClient client){
+
+    // number of iterations of tests by cache
+    final static int iteration_num = 10;
+    // number keys for put in cache by one iteration
+    final static int num_keys = 10_000;
+    // number of random keys to get from cache
+    final static int num_get_rnd_keys = 5;
+    // Thread sleep between iterations in ms.
+    final static long sleep = 0L;
+
+    public static void KVCacheTest(IgniteClient client) {
         IntervalTimer itm = new IntervalTimer();
 
         ClientCache<Integer, String> cache = client.getOrCreateCache("Cache_1");
@@ -19,8 +29,6 @@ public class KeyValueCacheTest {
             cache.clear();
         }
 
-        final int iteration_num = 10; //10;
-        final int num_keys = 10_000;
         long iteration_period = 0;
         for (int iteration = 0; iteration < iteration_num; iteration++) {
             // add 10000 keys in cache and get time for this operation
@@ -32,18 +40,20 @@ public class KeyValueCacheTest {
             }
             //iteration_period += itm.stopWithMessage();
             iteration_period += itm.stop();
-//                try {
-//                    Thread.sleep(2000L);
-//                } catch (InterruptedException e) {
-//                    throw new RuntimeException(e);
-//                }
+            if (sleep > 0) {
+                try {
+                    Thread.sleep(sleep);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
         System.out.println("Average time for " + iteration_num + " iterations is: " + (iteration_period / iteration_num) + " ms.");
 
-        System.out.println("Get 5 values by random keys");
+        System.out.println("Get " + num_get_rnd_keys + " values by random keys");
         Random rnd = new Random(System.currentTimeMillis());
         int rnd_num;
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < num_get_rnd_keys; i++) {
             rnd_num = rnd.nextInt(num_keys);
             try {
                 System.out.println("Key: " + rnd_num + "    Value: " + cache.getAsync(rnd_num).get());
