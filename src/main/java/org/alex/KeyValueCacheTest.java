@@ -7,38 +7,46 @@ import org.apache.ignite.cache.CachePeekMode;
 import org.apache.ignite.client.ClientCache;
 import org.apache.ignite.client.IgniteClient;
 
+import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
-enum UsePutOperation {
+enum PutOperation {
     PUT, PUT_ALL, PUT_ASYNC, PUT_ALL_ASYNC
 }
 
-enum UseGetOperation {
+enum GetOperation {
     GET, GET_ALL, GET_ASYNC, GET_ALL_ASYNC
 }
 
 public class KeyValueCacheTest {
+
     // clear cache before each iteration
     final static boolean CLEAR_CACHE_EACH_ITERATION = false;
 
-    // number of iterations of tests by cache
+    // number of test iterations
     final static int ITERATION_NUM = 5;
 
-    // number keys for put in cache by one iteration
+    // number keys for put in cache by one iteration (for put tests)
     final static int NUM_KEYS = 10_000;
-    // print statistic for each iteration of test
+
+    // print statistic after each iteration of test
     final static boolean NEED_STAT_FOR_EACH_ITERATION = true;
-    // number of random keys to get from cache
+
+    // number of random keys to get from cache (for get tests)
     final static int NUM_GET_RND_KEYS = 10_000;
-    // random gets from cache on each iteration
+
+    // random gets from cache after puts on each iteration
     final static boolean RANDOM_GETS_ON_EACH_ITERATION = true;
+
     // Print key value for get operation into console
     // Useful if we need to check elapsed time of gets operation for big number of keys.
     // In this case spent time to console out is not affected to overall time.
     final static boolean PRINT_GET_KV_INTO_CONSOLE = false;
-    // Thread sleep between iterations in ms.
+
+    // Thread sleep between iterations in ms (between gets and puts)
     final static long SLEEP = 0L;
+
     // Cache name for test
     final static String CACHE_NAME = "KeyValueCache";
 
@@ -47,64 +55,64 @@ public class KeyValueCacheTest {
 
         ClientCache<Integer, String> cache = client.getOrCreateCache(CACHE_NAME);
 
-        cache.clear();
+        clearCacheWithMessage(cache);
         System.out.println("====== Start ClientCache.put test =====");
-        putTest(cache, UsePutOperation.PUT);
+        putTest(cache, PutOperation.PUT);
 
-        cache.clear();
+        clearCacheWithMessage(cache);
         System.out.println("\n\n====== Start ClientCache.putAsync test =====");
-        putTest(cache, UsePutOperation.PUT_ASYNC);
+        putTest(cache, PutOperation.PUT_ASYNC);
 
-        cache.clear();
+        clearCacheWithMessage(cache);
         System.out.println("\n\n====== Start ClientCache.putAll test =====");
-        putTest(cache, UsePutOperation.PUT_ALL);
+        putTest(cache, PutOperation.PUT_ALL);
 
-        cache.clear();
+        clearCacheWithMessage(cache);
         System.out.println("\n\n====== Start ClientCache.putAllAsync test =====");
-        putTest(cache, UsePutOperation.PUT_ALL_ASYNC);
+        putTest(cache, PutOperation.PUT_ALL_ASYNC);
     }
 
 
     /*
-    Test put operations.
-    You can select desired method for put operation from these:
-        ClientCache.put
-        ClientCache.putAll
-        ClientCache.putAsync
-        ClientCache.putAllAsync
-    by select via "putOperation"
+    Test put operations with selected method (use "putOp" for this)
      */
-    private static void putTest(ClientCache<Integer, String> cache, UsePutOperation putOperation) {
-        IntervalTimer itm = new IntervalTimer();
+    private static void putTest(ClientCache<Integer, String> cache, PutOperation putOp) {
 
         Map<Integer, String> map = new HashMap<>(); // Map uses only putAll and putAllAsync methods
         String cacheValue;
 
-        long iteration_period = 0; // for calculate average time
+        long totalPutTime = 0; // for calculate average time with all iterations
+        long onePutIterationTime;
 
         for (int iteration = 1; iteration <= ITERATION_NUM; iteration++) {
 
-            if (putOperation == UsePutOperation.PUT_ALL || putOperation == UsePutOperation.PUT_ALL_ASYNC) {
+            if (putOp == PutOperation.PUT_ALL || putOp == PutOperation.PUT_ALL_ASYNC) {
                 map.clear();
             }
 
             if (CLEAR_CACHE_EACH_ITERATION) cache.clear();
 
-            itm.start(); //start timer
+            onePutIterationTime = System.currentTimeMillis();  //start interval measurement
 
             // Put keys into cache be selected method
             for (int i = 0; i < NUM_KEYS; i++) {
                 cacheValue = "Iteration: " + iteration + ", Value_" + i;
-                if (putOperation == UsePutOperation.PUT) cache.put(i, cacheValue);
-                else if (putOperation == UsePutOperation.PUT_ASYNC) cache.putAsync(i, cacheValue);
-                else if (putOperation == UsePutOperation.PUT_ALL || putOperation == UsePutOperation.PUT_ALL_ASYNC)
+                if (putOp == PutOperation.PUT) cache.put(i, cacheValue);
+                else if (putOp == PutOperation.PUT_ASYNC) cache.putAsync(i, cacheValue);
+                else if (putOp == PutOperation.PUT_ALL || putOp == PutOperation.PUT_ALL_ASYNC)
                     map.put(i, cacheValue);
             }
-            if (putOperation == UsePutOperation.PUT_ALL) cache.putAll(map);
-            if (putOperation == UsePutOperation.PUT_ALL_ASYNC) cache.putAllAsync(map);
+            if (putOp == PutOperation.PUT_ALL) cache.putAll(map);
+            if (putOp == PutOperation.PUT_ALL_ASYNC) cache.putAllAsync(map);
 
-            if (NEED_STAT_FOR_EACH_ITERATION) iteration_period += itm.stopWithMessage();
-            else iteration_period += itm.stop();
+            onePutIterationTime = System.currentTimeMillis() - onePutIterationTime; // delta time end-begin
+            totalPutTime += onePutIterationTime;
+            if (NEED_STAT_FOR_EACH_ITERATION) {
+                System.out.println(putOp.toString() + " iteration: " + iteration +
+                        " with " + NUM_KEYS + " keys was completed in " + onePutIterationTime + " ms. [ " +
+                        LocalTime.ofNanoOfDay(onePutIterationTime * 1000000).toString() + " ]");
+            }
+
 
             // Delay between put data into a cache and get from it
             if (SLEEP > 0) {
@@ -116,50 +124,54 @@ public class KeyValueCacheTest {
             }
             // Get from cache
             if (RANDOM_GETS_ON_EACH_ITERATION) {
-                if (putOperation == UsePutOperation.PUT)
-                    getRandomValuesFromCache(cache, UseGetOperation.GET);
-                if (putOperation == UsePutOperation.PUT_ASYNC)
-                    getRandomValuesFromCache(cache, UseGetOperation.GET_ASYNC);
-                if (putOperation == UsePutOperation.PUT_ALL)
-                    getRandomValuesFromCache(cache, UseGetOperation.GET_ALL);
-                if (putOperation == UsePutOperation.PUT_ALL_ASYNC)
-                    getRandomValuesFromCache(cache, UseGetOperation.GET_ALL_ASYNC);
+                if (putOp == PutOperation.PUT)
+                    getRandomValuesFromCache(cache, GetOperation.GET);
+                if (putOp == PutOperation.PUT_ASYNC)
+                    getRandomValuesFromCache(cache, GetOperation.GET_ASYNC);
+                if (putOp == PutOperation.PUT_ALL)
+                    getRandomValuesFromCache(cache, GetOperation.GET_ALL);
+                if (putOp == PutOperation.PUT_ALL_ASYNC)
+                    getRandomValuesFromCache(cache, GetOperation.GET_ALL_ASYNC);
             }
         }
 
-        System.out.println("Average time for " + ITERATION_NUM + " put iterations is: " + (iteration_period / ITERATION_NUM) + " ms.");
+        System.out.println("--- Average time for " + ITERATION_NUM + " iterations of the " + putOp.toString() +
+                " type (each with " + NUM_KEYS + " keys) was: " + (totalPutTime / ITERATION_NUM) + " ms.");
     }
 
-
-    public static void getRandomValuesFromCache(ClientCache<Integer, String> cache, UseGetOperation getOperation) {
+    /*
+    Test get operations by random keys with selected method (use "getOp" for this)
+     */
+    public static void getRandomValuesFromCache(ClientCache<Integer, String> cache, GetOperation getOp) {
         if (cache.size(CachePeekMode.PRIMARY) == 0) {
-            System.out.println("The cache \"" + cache.getName() + "\" is empty!");
+            System.out.println(getOp.toString() + " Can't get anything from the cache \"" + cache.getName() +
+                    "\" because it's empty");
             return;
         }
 
         Set<Integer> setKeys = new HashSet<>();    // Keys for getAll and getAllAsync
         Map<Integer, String> map; // For returned Keys and Values for getAll and getAllAsync
 
-        System.out.println("Get " + NUM_GET_RND_KEYS + " values by random keys, type of operation: " + getOperation.toString());
+        if (PRINT_GET_KV_INTO_CONSOLE)
+            System.out.println("== Get " + NUM_GET_RND_KEYS +
+                    " values by random keys, type of operation: " + getOp.toString());
 
         Random rnd = new Random(System.currentTimeMillis());
         int rnd_num;
 
-        long startTime_ms = System.currentTimeMillis();
+        long getOperationsTime = System.currentTimeMillis();
 
         for (int key = 0; key < NUM_GET_RND_KEYS; key++) {
             rnd_num = rnd.nextInt(NUM_KEYS);
 
             try {
-                if (getOperation == UseGetOperation.GET) {
+                if (getOp == GetOperation.GET) {
                     if (!PRINT_GET_KV_INTO_CONSOLE) cache.get(rnd_num);
                     else System.out.println("Key: " + rnd_num + "    Value: " + cache.get(rnd_num));
-                }
-                else if (getOperation == UseGetOperation.GET_ASYNC) {
+                } else if (getOp == GetOperation.GET_ASYNC) {
                     if (!PRINT_GET_KV_INTO_CONSOLE) cache.getAsync(rnd_num).get();
                     else System.out.println("Key: " + rnd_num + "    Value: " + cache.getAsync(rnd_num).get());
-                }
-                else if (getOperation == UseGetOperation.GET_ALL || getOperation == UseGetOperation.GET_ALL_ASYNC)
+                } else if (getOp == GetOperation.GET_ALL || getOp == GetOperation.GET_ALL_ASYNC)
                     setKeys.add(key);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
@@ -167,13 +179,13 @@ public class KeyValueCacheTest {
                 throw new RuntimeException(e);
             }
         }
-        if (getOperation == UseGetOperation.GET_ALL) {
+        if (getOp == GetOperation.GET_ALL) {
             map = cache.getAll(setKeys);
             if (PRINT_GET_KV_INTO_CONSOLE) map.forEach((k, v) -> {
                 System.out.println("Key: " + k + "    Value: " + v);
             });
         }
-        if (getOperation == UseGetOperation.GET_ALL_ASYNC) {
+        if (getOp == GetOperation.GET_ALL_ASYNC) {
             try {
                 map = cache.getAllAsync(setKeys).get();
             } catch (InterruptedException e) {
@@ -185,8 +197,15 @@ public class KeyValueCacheTest {
                 System.out.println("Key: " + k + "    Value: " + v);
             });
         }
-        long period = System.currentTimeMillis() - startTime_ms;
-        System.out.println("Elapsed time for " + NUM_GET_RND_KEYS + " " + getOperation.toString() + " operations is " + period + " ms.");
+        getOperationsTime = System.currentTimeMillis() - getOperationsTime;
+        System.out.println(getOp.toString() + " with " + NUM_GET_RND_KEYS +
+                " random keys was completed in " + getOperationsTime + " ms.       [ " +
+                LocalTime.ofNanoOfDay(getOperationsTime * 1000000).toString() + " ]");
+    }
+
+    private static void clearCacheWithMessage(ClientCache cache) {
+        cache.clear();
+        System.out.println(" >>> Cleared cache \"" + cache.getName() + "\" <<<");
     }
 }
 

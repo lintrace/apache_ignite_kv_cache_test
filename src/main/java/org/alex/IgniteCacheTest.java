@@ -11,7 +11,7 @@ import org.apache.ignite.configuration.ClientConfiguration;
 
 import static org.alex.KeyValueCacheTest.startKVCacheTest;
 
-public class IgniteKVCacheTest {
+public class IgniteCacheTest {
     final public static String SERVER_NODE_ADDRESS = "192.168.111.3:10800";
 
     public static void main(String[] args) {
@@ -20,6 +20,7 @@ public class IgniteKVCacheTest {
         cfg.setPartitionAwarenessEnabled(true);
 
         try (IgniteClient client = Ignition.startClient(cfg)) {
+            // Tests with Key Value cache
             startKVCacheTest(client);
         }
     }
