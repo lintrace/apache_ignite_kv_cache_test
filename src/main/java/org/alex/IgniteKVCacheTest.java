@@ -11,7 +11,7 @@ import org.apache.ignite.configuration.ClientConfiguration;
 
 import static org.alex.KeyValueCacheTest.startKVCacheTest;
 
-public class IgnCl2023 {
+public class IgniteKVCacheTest {
     final public static String SERVER_NODE_ADDRESS = "192.168.111.3:10800";
 
     public static void main(String[] args) {
