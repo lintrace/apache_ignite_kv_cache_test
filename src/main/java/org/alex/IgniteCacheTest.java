@@ -10,6 +10,8 @@ import org.apache.ignite.client.IgniteClient;
 import org.apache.ignite.cluster.ClusterState;
 import org.apache.ignite.configuration.ClientConfiguration;
 
+import java.util.Map;
+
 import static org.alex.KeyValueCacheTest.startKVCacheTest;
 
 public class IgniteCacheTest {
@@ -21,6 +23,11 @@ public class IgniteCacheTest {
         cfg.setPartitionAwarenessEnabled(true);
 
         try (IgniteClient client = Ignition.startClient(cfg)) {
+            Map<String,Object> attr = client.cluster().node().attributes();
+            System.out.println("=======================================================");
+            System.out.println("OS: " + attr.get("os.name") + " \t\t Ignite ver: " + attr.get("org.apache.ignite.build.ver"));
+            System.out.println("=======================================================");
+
             System.out.println("Cluster is in " + client.cluster().state().name() + " state.\n");
             if (client.cluster().state() == ClusterState.INACTIVE || client.cluster().state() == ClusterState.ACTIVE_READ_ONLY) {
                 client.cluster().state(ClusterState.ACTIVE);
@@ -37,6 +44,8 @@ public class IgniteCacheTest {
 
             // Tests with Key Value cache
             startKVCacheTest(client);
+
+
         }
     }
 }

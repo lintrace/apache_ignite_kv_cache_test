@@ -1,5 +1,5 @@
 /*
- Set of the tests for KeyValue cache in Apache Ignite
+ Group of the tests for Key-Value cache in Apache Ignite
  */
 package org.alex;
 
@@ -50,6 +50,8 @@ public class KeyValueCacheTest {
     // Cache name for test
     final static String CACHE_NAME = "KeyValueCache";
 
+    // Need to destroy the cache after completing tests
+    final static boolean DESTROY_CACHE_AFTER_TEST = true;
 
     public static void startKVCacheTest(IgniteClient client) {
 
@@ -70,6 +72,11 @@ public class KeyValueCacheTest {
         clearCacheWithMessage(cache);
         System.out.println("\n\n====== Start ClientCache.putAllAsync test =====");
         putTest(cache, PutOperation.PUT_ALL_ASYNC);
+
+        // TODO replace and remove tests
+        // TODO also maybe is useful not randomized (flat) get tests
+
+        if (DESTROY_CACHE_AFTER_TEST) client.destroyCache(CACHE_NAME);
     }
 
 
@@ -112,8 +119,6 @@ public class KeyValueCacheTest {
                         " with " + NUM_KEYS + " keys was completed in " + onePutIterationTime + " ms. [ " +
                         LocalTime.ofNanoOfDay(onePutIterationTime * 1000000).toString() + " ]");
             }
-
-
             // Delay between put data into a cache and get from it
             if (SLEEP > 0) {
                 try {
