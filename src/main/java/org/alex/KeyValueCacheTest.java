@@ -19,6 +19,10 @@ enum GetOperation {
     GET, GET_ALL, GET_ASYNC, GET_ALL_ASYNC
 }
 
+enum RemoveOperation {
+    REMOVE, REMOVE_ALL, REMOVE_ASYNC, REMOVE_ALL_ASYNC
+}
+
 public class KeyValueCacheTest {
 
     // clear cache before each iteration
@@ -60,18 +64,22 @@ public class KeyValueCacheTest {
         clearCacheWithMessage(cache);
         System.out.println("====== Start ClientCache.put test =====");
         putTest(cache, PutOperation.PUT);
+        removeTest(cache, RemoveOperation.REMOVE);
 
         clearCacheWithMessage(cache);
         System.out.println("\n\n====== Start ClientCache.putAsync test =====");
         putTest(cache, PutOperation.PUT_ASYNC);
+        removeTest(cache, RemoveOperation.REMOVE_ASYNC);
 
         clearCacheWithMessage(cache);
         System.out.println("\n\n====== Start ClientCache.putAll test =====");
         putTest(cache, PutOperation.PUT_ALL);
+        removeTest(cache, RemoveOperation.REMOVE_ALL);
 
         clearCacheWithMessage(cache);
         System.out.println("\n\n====== Start ClientCache.putAllAsync test =====");
         putTest(cache, PutOperation.PUT_ALL_ASYNC);
+        removeTest(cache, RemoveOperation.REMOVE_ALL_ASYNC);
 
         // TODO replace and remove tests
         // TODO also maybe is useful not randomized (flat) get tests
@@ -85,7 +93,7 @@ public class KeyValueCacheTest {
      */
     private static void putTest(ClientCache<Integer, String> cache, PutOperation putOp) {
 
-        Map<Integer, String> map = new HashMap<>(); // Map uses only putAll and putAllAsync methods
+        Map<Integer, String> map = new HashMap<>(); // Map used for putAll and putAllAsync methods
         String cacheValue;
 
         long totalPutTime = 0; // for calculate average time with all iterations
@@ -101,7 +109,7 @@ public class KeyValueCacheTest {
 
             onePutIterationTime = System.currentTimeMillis();  //start interval measurement
 
-            // Put keys into cache be selected method
+            // Put keys into cache by selected method
             for (int i = 0; i < NUM_KEYS; i++) {
                 cacheValue = "Iteration: " + iteration + ", Value_" + i;
                 if (putOp == PutOperation.PUT) cache.put(i, cacheValue);
@@ -144,6 +152,28 @@ public class KeyValueCacheTest {
                 " type (each with " + NUM_KEYS + " keys) was: " + (totalPutTime / ITERATION_NUM) + " ms.");
     }
 
+
+    private static void removeTest(ClientCache<Integer, String> cache, RemoveOperation remOp) {
+
+        Set<Integer> keyset = new HashSet<>(); // Uses for putAll and putAllAsync methods
+
+        long totalRemoveTime  = System.currentTimeMillis();
+
+        for (int i = 0; i < NUM_KEYS; i++) {
+            if (remOp == RemoveOperation.REMOVE) cache.remove(i);
+            else if (remOp == RemoveOperation.REMOVE_ASYNC) cache.removeAsync(i);
+            else if (remOp == RemoveOperation.REMOVE_ALL || remOp == RemoveOperation.REMOVE_ALL_ASYNC)
+                keyset.add(i);
+        }
+        if (remOp == RemoveOperation.REMOVE_ALL) cache.removeAll(keyset);
+        if (remOp == RemoveOperation.REMOVE_ALL_ASYNC) cache.removeAllAsync(keyset);
+
+        totalRemoveTime = System.currentTimeMillis() - totalRemoveTime; // delta time end-begin
+
+        System.out.println("--- Remove time for " NUM_KEYS + " " + remOp.toString() +
+                " was: " + (totalRemoveTime / ITERATION_NUM) + " ms.");
+    }
+
     /*
     Test get operations by random keys with selected method (use "getOp" for this)
      */
@@ -154,7 +184,7 @@ public class KeyValueCacheTest {
             return;
         }
 
-        Set<Integer> setKeys = new HashSet<>();    // Keys for getAll and getAllAsync
+        Set<Integer> keyset = new HashSet<>();    // Keys for getAll and getAllAsync
         Map<Integer, String> map; // For returned Keys and Values for getAll and getAllAsync
 
         if (PRINT_GET_KV_INTO_CONSOLE)
@@ -177,7 +207,7 @@ public class KeyValueCacheTest {
                     if (!PRINT_GET_KV_INTO_CONSOLE) cache.getAsync(rnd_num).get();
                     else System.out.println("Key: " + rnd_num + "    Value: " + cache.getAsync(rnd_num).get());
                 } else if (getOp == GetOperation.GET_ALL || getOp == GetOperation.GET_ALL_ASYNC)
-                    setKeys.add(key);
+                    keyset.add(key);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             } catch (ExecutionException e) {
@@ -185,14 +215,14 @@ public class KeyValueCacheTest {
             }
         }
         if (getOp == GetOperation.GET_ALL) {
-            map = cache.getAll(setKeys);
+            map = cache.getAll(keyset);
             if (PRINT_GET_KV_INTO_CONSOLE) map.forEach((k, v) -> {
                 System.out.println("Key: " + k + "    Value: " + v);
             });
         }
         if (getOp == GetOperation.GET_ALL_ASYNC) {
             try {
-                map = cache.getAllAsync(setKeys).get();
+                map = cache.getAllAsync(keyset).get();
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             } catch (ExecutionException e) {
