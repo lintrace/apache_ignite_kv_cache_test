@@ -170,8 +170,8 @@ public class KeyValueCacheTest {
 
         totalRemoveTime = System.currentTimeMillis() - totalRemoveTime; // delta time end-begin
 
-        System.out.println("--- Remove time for " NUM_KEYS + " " + remOp.toString() +
-                " was: " + (totalRemoveTime / ITERATION_NUM) + " ms.");
+        System.out.println("--- " + remOp.toString() + " time for " + NUM_KEYS +
+                " keys was: " + (totalRemoveTime / ITERATION_NUM) + " ms.");
     }
 
     /*
