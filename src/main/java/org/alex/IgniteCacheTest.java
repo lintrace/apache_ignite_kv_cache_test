@@ -15,7 +15,7 @@ import java.util.Map;
 import static org.alex.KeyValueCacheTest.startKVCacheTest;
 
 public class IgniteCacheTest {
-    final public static String SERVER_NODE_ADDRESS = "192.168.111.3:10800";
+    final public static String SERVER_NODE_ADDRESS = "localhost:10800";
 
     public static void main(String[] args) {
 
