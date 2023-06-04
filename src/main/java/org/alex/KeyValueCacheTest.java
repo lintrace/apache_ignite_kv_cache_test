@@ -23,6 +23,11 @@ enum RemoveOperation {
     REMOVE, REMOVE_ALL, REMOVE_ASYNC, REMOVE_ALL_ASYNC
 }
 
+enum ReplaceOperation {
+    REPLACE, REPLACE_ASYNC
+}
+
+
 public class KeyValueCacheTest {
 
     // clear cache before each iteration
@@ -64,11 +69,13 @@ public class KeyValueCacheTest {
         clearCacheWithMessage(cache);
         System.out.println("====== Start ClientCache.put test =====");
         putTest(cache, PutOperation.PUT);
+        replaceTest(cache, ReplaceOperation.REPLACE);
         removeTest(cache, RemoveOperation.REMOVE);
 
         clearCacheWithMessage(cache);
         System.out.println("\n\n====== Start ClientCache.putAsync test =====");
         putTest(cache, PutOperation.PUT_ASYNC);
+        replaceTest(cache, ReplaceOperation.REPLACE_ASYNC);
         removeTest(cache, RemoveOperation.REMOVE_ASYNC);
 
         clearCacheWithMessage(cache);
@@ -81,7 +88,6 @@ public class KeyValueCacheTest {
         putTest(cache, PutOperation.PUT_ALL_ASYNC);
         removeTest(cache, RemoveOperation.REMOVE_ALL_ASYNC);
 
-        // TODO replace and remove tests
         // TODO also maybe is useful not randomized (flat) get tests
 
         if (DESTROY_CACHE_AFTER_TEST) client.destroyCache(CACHE_NAME);
@@ -152,6 +158,50 @@ public class KeyValueCacheTest {
                 " type (each with " + NUM_KEYS + " keys) was: " + (totalPutTime / ITERATION_NUM) + " ms.");
     }
 
+    private static void replaceTest(ClientCache<Integer, String> cache, ReplaceOperation replaceOp) {
+
+        String cacheValue;
+
+        long totalReplaceTime = 0; // for calculate average time with all iterations
+        long oneReplaceIterationTime;
+
+        for (int iteration = 1; iteration <= ITERATION_NUM; iteration++) {
+
+            oneReplaceIterationTime = System.currentTimeMillis();  //start interval measurement
+
+            for (int i = 0; i < NUM_KEYS; i++) {
+                cacheValue = "Iteration: " + iteration + ", Replaced_" + i;
+                if (replaceOp == ReplaceOperation.REPLACE) cache.replace(i, cacheValue);
+                else cache.replaceAsync(i, cacheValue);
+            }
+
+            oneReplaceIterationTime = System.currentTimeMillis() - oneReplaceIterationTime; // delta time end-begin
+            totalReplaceTime += oneReplaceIterationTime;
+            if (NEED_STAT_FOR_EACH_ITERATION) {
+                System.out.println(replaceOp.toString() + " iteration: " + iteration +
+                        " with " + NUM_KEYS + " keys was completed in " + oneReplaceIterationTime + " ms. [ " +
+                        LocalTime.ofNanoOfDay(oneReplaceIterationTime * 1000000).toString() + " ]");
+            }
+            // Delay between put data into a cache and get from it
+            if (SLEEP > 0) {
+                try {
+                    Thread.sleep(SLEEP);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            // Get from cache
+            if (RANDOM_GETS_ON_EACH_ITERATION) {
+                if (replaceOp == ReplaceOperation.REPLACE)
+                    getRandomValuesFromCache(cache, GetOperation.GET);
+                else
+                    getRandomValuesFromCache(cache, GetOperation.GET_ASYNC);
+            }
+        }
+
+        System.out.println("--- Average time for " + ITERATION_NUM + " iterations of the " + replaceOp.toString() +
+                " type (each with " + NUM_KEYS + " keys) was: " + (totalReplaceTime / ITERATION_NUM) + " ms.");
+    }
 
     private static void removeTest(ClientCache<Integer, String> cache, RemoveOperation remOp) {
 
