@@ -62,31 +62,37 @@ public class KeyValueCacheTest {
     // Need to destroy the cache after completing tests
     final static boolean DESTROY_CACHE_AFTER_TEST = true;
 
-    public static void startKVCacheTest(IgniteClient client) {
+    final private IgniteClient client;
+    final private ClientCache<Integer, String> kv_cache;
 
-        ClientCache<Integer, String> cache = client.getOrCreateCache(CACHE_NAME);
+    KeyValueCacheTest(IgniteClient _client){
+        client = _client;
+        kv_cache = client.getOrCreateCache(CACHE_NAME);
+    }
 
-        clearCacheWithMessage(cache);
+    public void startKVCacheTest() {
+
+        clearCacheWithMessage();
         System.out.println("====== Start ClientCache.put test =====");
-        putTest(cache, PutOperation.PUT);
-        replaceTest(cache, ReplaceOperation.REPLACE);
-        removeTest(cache, RemoveOperation.REMOVE);
+        putTest(PutOperation.PUT);
+        replaceTest(ReplaceOperation.REPLACE);
+        removeTest(RemoveOperation.REMOVE);
 
-        clearCacheWithMessage(cache);
+        clearCacheWithMessage();
         System.out.println("\n\n====== Start ClientCache.putAsync test =====");
-        putTest(cache, PutOperation.PUT_ASYNC);
-        replaceTest(cache, ReplaceOperation.REPLACE_ASYNC);
-        removeTest(cache, RemoveOperation.REMOVE_ASYNC);
+        putTest(PutOperation.PUT_ASYNC);
+        replaceTest(ReplaceOperation.REPLACE_ASYNC);
+        removeTest(RemoveOperation.REMOVE_ASYNC);
 
-        clearCacheWithMessage(cache);
+        clearCacheWithMessage();
         System.out.println("\n\n====== Start ClientCache.putAll test =====");
-        putTest(cache, PutOperation.PUT_ALL);
-        removeTest(cache, RemoveOperation.REMOVE_ALL);
+        putTest(PutOperation.PUT_ALL);
+        removeTest(RemoveOperation.REMOVE_ALL);
 
-        clearCacheWithMessage(cache);
+        clearCacheWithMessage();
         System.out.println("\n\n====== Start ClientCache.putAllAsync test =====");
-        putTest(cache, PutOperation.PUT_ALL_ASYNC);
-        removeTest(cache, RemoveOperation.REMOVE_ALL_ASYNC);
+        putTest(PutOperation.PUT_ALL_ASYNC);
+        removeTest(RemoveOperation.REMOVE_ALL_ASYNC);
 
         // TODO also maybe is useful not randomized (flat) get tests
 
@@ -97,7 +103,10 @@ public class KeyValueCacheTest {
     /*
     Test put operations with selected method (use "putOp" for this)
      */
-    private static void putTest(ClientCache<Integer, String> cache, PutOperation putOp) {
+    private void putTest(PutOperation putOp) {
+        putTest(kv_cache,putOp);
+    }
+    private void putTest(ClientCache<Integer, String> cache, PutOperation putOp) {
 
         Map<Integer, String> map = new HashMap<>(); // Map used for putAll and putAllAsync methods
         String cacheValue;
@@ -158,7 +167,10 @@ public class KeyValueCacheTest {
                 " type (each with " + NUM_KEYS + " keys) was: " + (totalPutTime / ITERATION_NUM) + " ms.");
     }
 
-    private static void replaceTest(ClientCache<Integer, String> cache, ReplaceOperation replaceOp) {
+    private void replaceTest(ReplaceOperation replaceOp) {
+        replaceTest(kv_cache, replaceOp);
+    }
+    private void replaceTest(ClientCache<Integer, String> cache, ReplaceOperation replaceOp) {
 
         String cacheValue;
 
@@ -203,7 +215,10 @@ public class KeyValueCacheTest {
                 " type (each with " + NUM_KEYS + " keys) was: " + (totalReplaceTime / ITERATION_NUM) + " ms.");
     }
 
-    private static void removeTest(ClientCache<Integer, String> cache, RemoveOperation remOp) {
+    private void removeTest(RemoveOperation remOp) {
+        removeTest(kv_cache,remOp);
+    }
+    private void removeTest(ClientCache<Integer, String> cache, RemoveOperation remOp) {
 
         Set<Integer> keyset = new HashSet<>(); // Uses for putAll and putAllAsync methods
 
@@ -227,7 +242,10 @@ public class KeyValueCacheTest {
     /*
     Test get operations by random keys with selected method (use "getOp" for this)
      */
-    public static void getRandomValuesFromCache(ClientCache<Integer, String> cache, GetOperation getOp) {
+    public void getRandomValuesFromCache(GetOperation getOp) {
+        getRandomValuesFromCache(kv_cache,getOp);
+    }
+    public void getRandomValuesFromCache(ClientCache<Integer, String> cache, GetOperation getOp) {
         if (cache.size(CachePeekMode.PRIMARY) == 0) {
             System.out.println(getOp.toString() + " Can't get anything from the cache \"" + cache.getName() +
                     "\" because it's empty");
@@ -258,9 +276,7 @@ public class KeyValueCacheTest {
                     else System.out.println("Key: " + rnd_num + "    Value: " + cache.getAsync(rnd_num).get());
                 } else if (getOp == GetOperation.GET_ALL || getOp == GetOperation.GET_ALL_ASYNC)
                     keyset.add(key);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            } catch (ExecutionException e) {
+            } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -273,9 +289,7 @@ public class KeyValueCacheTest {
         if (getOp == GetOperation.GET_ALL_ASYNC) {
             try {
                 map = cache.getAllAsync(keyset).get();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            } catch (ExecutionException e) {
+            } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
             if (PRINT_GET_KV_INTO_CONSOLE) map.forEach((k, v) -> {
@@ -288,7 +302,10 @@ public class KeyValueCacheTest {
                 LocalTime.ofNanoOfDay(getOperationsTime * 1000000).toString() + " ]");
     }
 
-    private static void clearCacheWithMessage(ClientCache cache) {
+    private void clearCacheWithMessage() {
+        clearCacheWithMessage(kv_cache);
+    }
+    private void clearCacheWithMessage(ClientCache cache) {
         cache.clear();
         System.out.println(" >>> Cleared cache \"" + cache.getName() + "\" <<<");
     }

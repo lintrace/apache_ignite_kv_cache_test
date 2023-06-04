@@ -12,8 +12,6 @@ import org.apache.ignite.configuration.ClientConfiguration;
 
 import java.util.Map;
 
-import static org.alex.KeyValueCacheTest.startKVCacheTest;
-
 public class IgniteCacheTest {
     final public static String SERVER_NODE_ADDRESS = "localhost:10800";
 
@@ -43,7 +41,7 @@ public class IgniteCacheTest {
             }
 
             // Tests with Key Value cache
-            startKVCacheTest(client);
+            new KeyValueCacheTest(client).startKVCacheTest();
         }
     }
 }
